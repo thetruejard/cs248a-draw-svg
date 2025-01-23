@@ -85,9 +85,16 @@ Color Sampler2DImp::sample_nearest(Texture& tex,
 
   // Task 4: Implement nearest neighbour interpolation
   
-  // return magenta for invalid level
-  return Color(1,0,1,1);
+  if (level != 0)
+    // return magenta for invalid level
+    return Color(1,0,1,1);
 
+  auto& mip = tex.mipmap[level];
+  int su = max(0, min(int(u * mip.width), int(mip.width - 1)));
+  int sv = max(0, min(int(v * mip.height), int(mip.height - 1)));
+  Color c;
+  uint8_to_float(&c.r, &mip.texels[4 * (sv * mip.width + su)]);
+  return c;
 }
 
 Color Sampler2DImp::sample_bilinear(Texture& tex, 
@@ -96,9 +103,21 @@ Color Sampler2DImp::sample_bilinear(Texture& tex,
   
   // Task 4: Implement bilinear filtering
 
-  // return magenta for invalid level
-  return Color(1,0,1,1);
+  float halfu = 0.5f / float(tex.mipmap[level].width);
+  float halfv = 0.5f / float(tex.mipmap[level].height);
+  Color c00 = sample_nearest(tex, u - halfu, v - halfv, level);
+  Color c10 = sample_nearest(tex, u + halfu, v - halfv, level);
+  Color c01 = sample_nearest(tex, u - halfu, v + halfv, level);
+  Color c11 = sample_nearest(tex, u + halfu, v + halfv, level);
 
+  float uf = u * float(tex.mipmap[level].width) - 0.5f;
+  float vf = v * float(tex.mipmap[level].height) - 0.5f;
+  uf -= (long)uf;
+  vf -= (long)vf;
+
+  Color c0 = c00 * (1.0f - vf) + c01 * vf;
+  Color c1 = c10 * (1.0f - vf) + c11 * vf;
+  return c0 * (1.0f - uf) + c1 * uf;
 }
 
 Color Sampler2DImp::sample_trilinear(Texture& tex, 

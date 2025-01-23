@@ -12,7 +12,15 @@ void ViewportImp::set_viewbox( float x, float y, float span ) {
 
   this->x = x;
   this->y = y;
-  this->span = span; 
+  this->span = span;
+
+  Matrix3x3 ctn;
+  // i = 0.5 + (0.5/span) *  (i - x)
+  // i = i * 0.5/span + (0.5 - x*0.5/span)
+  ctn[0] = Vector3D(0.5/span, 0.0, 0.0);
+  ctn[1] = Vector3D(0.0, 0.5 / span, 0.0);
+  ctn[2] = Vector3D((0.5 - x * 0.5 / span), (0.5 - y * 0.5 / span), 1.0);
+  set_canvas_to_norm(ctn);
 
 }
 
